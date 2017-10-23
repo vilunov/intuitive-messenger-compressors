@@ -1,0 +1,6 @@
+[package]
+name = "intuitive-messenger-compressors"
+version = "0.0.0"
+authors = ["Nikita Vilunov", "Ivan Lyagaev"]
+
+[dependencies]
