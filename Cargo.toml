@@ -1,6 +1,9 @@
 [package]
-name = "intuitive-messenger-compressors"
+name = "compressors"
 version = "0.0.0"
 authors = ["Nikita Vilunov", "Ivan Lyagaev"]
+
+[lib]
+crate-type = ["dylib"]
 
 [dependencies]
