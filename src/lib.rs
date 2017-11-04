@@ -1,3 +1,7 @@
+extern crate bit_vec;
+
+mod huffman;
+
 use std::slice::from_raw_parts;
 use std::mem::forget;
 
@@ -15,10 +19,23 @@ pub fn drop(arr: Arr) {
 
 #[no_mangle]
 pub fn basic(vec: *const u8, len: usize) -> Arr {
+    wrapper(vec, len, basic_raw)
+}
 
+#[no_mangle]
+pub fn huff_encode(vec: *const u8, len: usize) -> Arr {
+    wrapper(vec, len, huffman::encode)
+}
+
+#[no_mangle]
+pub fn huff_decode(vec: *const u8, len: usize) -> Arr {
+    wrapper(vec, len, huffman::decode)
+}
+
+pub fn wrapper<F: Fn(&[u8]) -> Vec<u8>>(vec: *const u8, len: usize, func: F) -> Arr {
     let slice = unsafe { from_raw_parts(vec, len) };
 
-    let mut vec = basic_raw(slice);
+    let mut vec = func(slice);
     vec.shrink_to_fit();
 
     let ptr = vec.as_mut_ptr();
