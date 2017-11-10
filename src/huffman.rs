@@ -40,7 +40,7 @@ impl Ord for Pair {
     }
 }
 
-fn slovar(freqs: [u32; 256]) -> [Node; 256] {
+fn slovar(freqs: &[u32; 256]) -> [Node; 256] {
     use std::u32::MAX;
     use self::Pair::*;
 
@@ -69,28 +69,69 @@ fn slovar(freqs: [u32; 256]) -> [Node; 256] {
     arr
 }
 
-fn slovar_encode(freqs: [u32; 256]) -> HashMap<u8, BitVec> {
-    use std::u32::MAX;
-    use self::Pair::*;
+fn slovar_encode(freqs: &[u32; 256]) -> HashMap<u8, BitVec> {
+    fn helper(slovar: &[Node; 256], mut cur_idx: u8, mut cur_vec: BitVec, map: &mut HashMap<u8, BitVec>) {
+        loop {
+            match slovar[cur_idx as usize] {
+                Continuation(a, b) => {
+                    cur_vec.push(false);
+                    helper(slovar, a, cur_vec.clone(), map);
+
+                    let last = cur_vec.len() - 1;
+                    cur_vec.set(last, true);
+                    cur_idx = b;
+                }
+                LeftFinish(a, b) => {
+                    cur_vec.push(false);
+                    map.insert(a, cur_vec.clone());
+                    cur_idx = b;
+                    let last = cur_vec.len() - 1;
+                    cur_vec.set(last, true);
+                }
+                RightFinish(a, b) => {
+                    cur_vec.push(true);
+                    map.insert(b, cur_vec.clone());
+                    cur_idx = a;
+                    let last = cur_vec.len() - 1;
+                    cur_vec.set(last, false);
+                }
+                BothFinish(a, b) => {
+                    cur_vec.push(false);
+                    map.insert(a, cur_vec.clone());
+                    let last = cur_vec.len() - 1;
+                    cur_vec.set(last, true);
+                    map.insert(b, cur_vec);
+                    break;
+                }
+            }
+        }
+    }
 
     let mut map: HashMap<u8, BitVec> = HashMap::new();
-    let mut heap = BinaryHeap::<Pair>::with_capacity(256);
-    for i in 0..256 {
-        if freqs[i] > 0 {
-            heap.push(Pair::Value(i as u8, MAX - freqs[i]));
-        }
-        map.insert(i as u8, BitVec::new());
-    }
+    let sl = slovar(freqs);
+    helper(&sl, 0, BitVec::new(), &mut map);
     map
 }
 
 pub fn decode(input: &[u8]) -> Vec<u8> {
-    let mut freqs: [u32; 256] = [0; 256];
-    for i in input {
-        freqs[*i as usize] += 1;
+    let mut freqs: [u32; 256] = unsafe { ::std::mem::uninitialized() };
+    let mut bits = BitVec::from_bytes(&input[0..input.len() - 256 * 4 - 1]);
+    {
+        use std::io::Cursor;
+        use byteorder::*;
+        let mut cursor: Cursor<&[u8]> = Cursor::new(&input[input.len() - 256 * 4 - 1..input.len() - 1]);
+        for i in 0..256 {
+            let val = cursor.read_u32::<LittleEndian>().unwrap();
+            freqs[i] = val;
+        }
     }
-    let slovar: [Node; 256] = slovar(freqs);
-    let bits = BitVec::from_bytes(input);
+    let slovar: [Node; 256] = slovar(&freqs);
+    let last = input[input.len() - 1];
+    if last > 0 {
+        for _ in 0..(8-last) {
+            bits.pop();
+        }
+    }
 
     let mut start = 0;
     let mut vec = Vec::new();
@@ -107,11 +148,21 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
     for i in input {
         freqs[*i as usize] += 1;
     }
-    let slovar: HashMap<u8, BitVec> = slovar_encode(freqs);
-    for (a, b) in slovar {
-        println!("{} {:?}", a, b);
+    let slovar: HashMap<u8, BitVec> = slovar_encode(&freqs);
+    let mut bits = BitVec::new();
+    for i in input {
+        for j in &slovar[i] {
+            bits.push(j);
+        }
     }
-    Vec::new()
+    let mut vec = bits.to_bytes();
+    for i in freqs.iter() {
+        use byteorder::*;
+
+        vec.write_u32::<LittleEndian>(*i).unwrap();
+    }
+    vec.push((bits.len() % 8) as u8);
+    vec
 }
 
 fn get(bits: &BitVec, start: usize, tree: &[Node; 256]) -> (u8, usize) {
@@ -141,7 +192,16 @@ mod test {
     use super::*;
     #[test]
     fn test() {
-        let mut input: Vec<u8> = vec![1, 3, 3, 7];
+        let input: Vec<u8> = vec![1, 3, 3, 7, 2, 2, 8, 14, 88, 13, 37, 37, 14, 53, 19, 41, 19, 45];
+
+        let encoded = encode(&input[..]);
+        let decoded = decode(&encoded[..]);
+        assert_eq!(decoded, input);
+    }
+
+    #[test]
+    fn test_two() {
+        let input: Vec<u8> = vec![1, 2];
 
         let encoded = encode(&input[..]);
         let decoded = decode(&encoded[..]);
