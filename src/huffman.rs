@@ -26,6 +26,13 @@ impl Pair {
             &Pair::Value(_, a) => a,
         }
     }
+
+    fn value(&self) -> Option<u8> {
+        match self {
+            &Pair::Value(a, _) => Some(a),
+            _ => None,
+        }
+    }
 }
 
 impl PartialOrd<Pair> for Pair {
@@ -50,7 +57,15 @@ fn slovar(freqs: &[u32; 256]) -> [Node; 256] {
             heap.push(Pair::Value(i as u8, MAX - freqs[i]));
         }
     }
-    let mut arr = [Node::Continuation(0, 0); 256];
+    let mut arr = [Continuation(0, 0); 256];
+    if heap.len() == 1 {
+        let val = heap.pop().unwrap().value().unwrap();
+        arr[0] = BothFinish(val, val.overflowing_add(1).0);
+        return arr;
+    } else if heap.len() == 0 {
+        arr[0] = BothFinish(0, 1);
+        return arr;
+    }
     let mut cur: u8 = 255;
     while heap.len() > 1 {
         cur -= 1;
@@ -200,8 +215,17 @@ mod test {
     }
 
     #[test]
-    fn test_two() {
-        let input: Vec<u8> = vec![1, 2];
+    fn test_single() {
+        let input: Vec<u8> = vec![1];
+
+        let encoded = encode(&input[..]);
+        let decoded = decode(&encoded[..]);
+        assert_eq!(decoded, input);
+    }
+
+    #[test]
+    fn test_none() {
+        let input: Vec<u8> = vec![];
 
         let encoded = encode(&input[..]);
         let decoded = decode(&encoded[..]);
