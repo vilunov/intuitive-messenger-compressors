@@ -1,0 +1,1 @@
+C:\Users\Ekaterina\ Yashkina\IdeaProjects\HammingCode\target\debug\HammingCode.exe: C:\Users\Ekaterina\ Yashkina\IdeaProjects\HammingCode\src\main.rs C:\Users\Ekaterina\ Yashkina\IdeaProjects\HammingCode\src\encoder.rs C:\Users\Ekaterina\ Yashkina\IdeaProjects\HammingCode\src\decoder.rs
