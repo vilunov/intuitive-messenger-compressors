@@ -2,6 +2,7 @@ extern crate bit_vec;
 extern crate byteorder;
 
 mod huffman;
+mod parity_check;
 
 use std::slice::from_raw_parts;
 use std::mem::forget;
