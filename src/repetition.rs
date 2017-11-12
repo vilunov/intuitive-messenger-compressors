@@ -16,18 +16,10 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
 }
 
 pub fn decode(input: &[u8]) -> Option<Vec<u8>> {
-    fn read_seq(in_vec: &BitVec<u32>, i: usize) -> Vec<u8> {
-        let mut out: Vec<u8> = Vec::new();
+    fn read_seq(in_vec: &BitVec<u32>, i: usize) -> u8 {
+        let mut out = 0;
         for x in 0..REPETITION_NUM {
-            out.push(in_vec.get(i + x).unwrap() as u8);
-        }
-        out
-    }
-
-    fn sum(in_vec: Vec<u8>) -> u8 {
-        let mut out: u8 = 0;
-        for x in &in_vec {
-            out += *x;
+            out += in_vec.get(i + x).unwrap() as u8;
         }
         out
     }
@@ -43,7 +35,7 @@ pub fn decode(input: &[u8]) -> Option<Vec<u8>> {
     let mut i = 0;
 
     for _ in 0..bit_vec_in.len()/3 {
-        let sum = sum(read_seq(&bit_vec_in, i));
+        let sum = read_seq(&bit_vec_in, i);
 
         if sum as usize > REPETITION_NUM.checked_div(2).unwrap() {
             bit_vec_out.push(true);
