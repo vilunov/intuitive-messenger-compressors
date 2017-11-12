@@ -7,7 +7,7 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
     let mut bit_vec_out = BitVec::new();
 
     for bit in &bit_vec_in {
-        for _ in 0..3 {
+        for _ in 0..REPETITION_NUM {
             bit_vec_out.push(bit);
         }
     }
