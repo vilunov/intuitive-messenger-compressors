@@ -45,7 +45,7 @@ pub fn set_parity(bVec: BitVec, a: u32, b: u32, c: u32) -> BitVec {
             if with_parity.get(pos as usize).unwrap() == true {
                 counter += 1;
             }
-            if (c < pow) {
+            if c < pow {
                 pos += 1;
                 c += 1;
             } else {
@@ -210,9 +210,11 @@ pub fn flipped_bit(index: Vec<HashSet<u32>>, parity: BitVec, code: BitVec) -> Bi
             let mistake: Vec<u32> = pos_mistake.difference(&index[ind3]).cloned().collect();
 
             let bit_to_flip: usize = mistake[0] as usize;
-            decoded.set(bit_to_flip, !decoded.get(bit_to_flip).unwrap());
+            let val = decoded.get(bit_to_flip).unwrap();
+            decoded.set(bit_to_flip, !val);
         } else {
-            decoded.set(6, !decoded.get(6).unwrap());
+            let val = decoded.get(6).unwrap();
+            decoded.set(6, !val);
         }
 
     }
@@ -246,7 +248,7 @@ pub fn parity_check(code: BitVec) -> BitVec {
         if counter % 2 == 0 {
             kk = true;
         }
-        if code.get(2u32.pow(x) - 1 as usize).unwrap() != kk {
+        if code.get(2usize.pow(x) - 1).unwrap() != kk {
             parity.set(x as usize, false);
         } else {
             parity.set(x as usize, true);

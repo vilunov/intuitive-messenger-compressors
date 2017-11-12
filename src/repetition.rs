@@ -4,46 +4,27 @@ const REPETITION_NUM: usize = 3;
 
 pub fn encode(input: &[u8]) -> Vec<u8> {
     let bit_vec_in = BitVec::from_bytes(input);
-    let mut bit_vec_out = BitVec::new();
+    let mut bit_vec_out = BitVec::from_elem(bit_vec_in.len() * REPETITION_NUM, false);
 
-    for bit in &bit_vec_in {
-        for _ in 0..REPETITION_NUM {
-            bit_vec_out.push(bit);
-        }
+    for i in 0..bit_vec_out.len() {
+        bit_vec_out.set(i, bit_vec_in[i / REPETITION_NUM]);
     }
 
     bit_vec_out.to_bytes()
 }
 
 pub fn decode(input: &[u8]) -> Option<Vec<u8>> {
-    fn read_seq(in_vec: &BitVec<u32>, i: usize) -> u8 {
-        let mut out = 0;
-        for x in 0..REPETITION_NUM {
-            out += in_vec.get(i + x).unwrap() as u8;
-        }
-        out
-    }
-
     if input.len() % REPETITION_NUM != 0 {
         return None;
     }
-
     let bit_vec_in = BitVec::from_bytes(input);
+    let mut bit_vec_out = BitVec::from_elem(bit_vec_in.len() / 3, false);
 
-    let mut bit_vec_out = BitVec::new();
-
-    let mut i = 0;
-
-    for _ in 0..bit_vec_in.len() / 3 {
-        let sum = read_seq(&bit_vec_in, i);
-
-        if sum as usize > REPETITION_NUM.checked_div(2).unwrap() {
-            bit_vec_out.push(true);
-        } else {
-            bit_vec_out.push(false);
-        }
-
-        i += 3;
+    for i in 0..bit_vec_out.len() {
+        let sum = (0..REPETITION_NUM)
+            .map(|x| bit_vec_in.get(i * 3 + x).unwrap())
+            .filter(|x| *x).count();
+        bit_vec_out.set(i, sum > REPETITION_NUM.checked_div(2).unwrap());
     }
 
     Some(bit_vec_out.to_bytes())
@@ -61,4 +42,36 @@ mod test {
         let decoded = decode(&encoded[..]).unwrap();
         assert_eq!(decoded, input);
     }
+
+    /*
+    use ::test::{Bencher, black_box};
+    use ::rand::{thread_rng, Rng};
+
+    #[bench]
+    fn bench1(b: &mut Bencher) {
+        const CAPACITY: usize = 1 * 1024;
+        let mut rng = thread_rng();
+        let mut vec = Vec::with_capacity(CAPACITY);
+        for _ in 0..CAPACITY {
+            vec.push(rng.gen::<u8>());
+        }
+        b.iter(|| {
+            black_box(encode(&vec));
+        });
+    }
+
+    #[bench]
+    fn bench2(b: &mut Bencher) {
+        const CAPACITY: usize = 1 * 1024;
+        let mut rng = thread_rng();
+        let mut vec = Vec::with_capacity(CAPACITY);
+        for _ in 0..CAPACITY {
+            vec.push(rng.gen::<u8>());
+        }
+        let vec2 = encode(&vec);
+        b.iter(|| {
+            black_box(decode(&vec2));
+        });
+    }
+    */
 }

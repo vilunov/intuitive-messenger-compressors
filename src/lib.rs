@@ -1,5 +1,10 @@
+/*
+#![feature(test)]
+extern crate test;
+/*
 extern crate bit_vec;
 extern crate byteorder;
+extern crate rand;
 
 mod huffman;
 mod parity_check;
