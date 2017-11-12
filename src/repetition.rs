@@ -34,7 +34,7 @@ pub fn decode(input: &[u8]) -> Option<Vec<u8>> {
 
     let mut i = 0;
 
-    for _ in 0..bit_vec_in.len()/3 {
+    for _ in 0..bit_vec_in.len() / 3 {
         let sum = read_seq(&bit_vec_in, i);
 
         if sum as usize > REPETITION_NUM.checked_div(2).unwrap() {

@@ -4,6 +4,7 @@ extern crate byteorder;
 mod huffman;
 mod parity_check;
 mod repetition;
+mod hamming;
 
 use std::slice::from_raw_parts;
 use std::mem::forget;

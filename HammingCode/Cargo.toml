@@ -1,8 +1,0 @@
-[package]
-name = "HammingCode"
-version = "0.1.0"
-authors = ["Ekaterina Yashkina"]
-
-[dependencies]
-bit-vec = "0.4.4"
-num = "0.1.40"

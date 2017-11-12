@@ -85,7 +85,10 @@ fn slovar(freqs: &[u32; 256]) -> [Node; 256] {
 }
 
 fn slovar_encode(freqs: &[u32; 256]) -> HashMap<u8, BitVec> {
-    fn helper(slovar: &[Node; 256], mut cur_idx: u8, mut cur_vec: BitVec, map: &mut HashMap<u8, BitVec>) {
+    fn helper(slovar: &[Node; 256],
+              mut cur_idx: u8,
+              mut cur_vec: BitVec,
+              map: &mut HashMap<u8, BitVec>) {
         loop {
             match slovar[cur_idx as usize] {
                 Continuation(a, b) => {
@@ -134,7 +137,8 @@ pub fn decode(input: &[u8]) -> Vec<u8> {
     {
         use std::io::Cursor;
         use byteorder::*;
-        let mut cursor: Cursor<&[u8]> = Cursor::new(&input[input.len() - 256 * 4 - 1..input.len() - 1]);
+        let mut cursor: Cursor<&[u8]> = Cursor::new(&input[input.len() - 256 * 4 - 1..
+                                                     input.len() - 1]);
         for i in 0..256 {
             let val = cursor.read_u32::<LittleEndian>().unwrap();
             freqs[i] = val;
@@ -143,7 +147,7 @@ pub fn decode(input: &[u8]) -> Vec<u8> {
     let slovar: [Node; 256] = slovar(&freqs);
     let last = input[input.len() - 1];
     if last > 0 {
-        for _ in 0..(8-last) {
+        for _ in 0..(8 - last) {
             bits.pop();
         }
     }
