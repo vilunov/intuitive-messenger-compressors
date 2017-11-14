@@ -9,6 +9,7 @@ extern crate rand;
 mod huffman;
 mod parity_check;
 mod repetition;
+mod shannon_fano;
 mod hamming;
 
 use std::slice::from_raw_parts;
