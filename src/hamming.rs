@@ -64,7 +64,7 @@ pub fn set_parity(bVec: BitVec, a: u32, b: u32, c: u32) -> BitVec {
 
 
 
-pub fn encode(input: &[u8])->Vec<u8>{
+pub fn encode(input: &[u8]) -> Vec<u8> {
     let mut bv = BitVec::from_bytes(input);
     let mut vector = BitVec::new();
     vector.push(false);
@@ -86,7 +86,7 @@ pub fn encode(input: &[u8])->Vec<u8>{
         vector.set(0, true);
     }
 
-   vector.to_bytes()
+    vector.to_bytes()
 
 }
 
@@ -99,7 +99,7 @@ pub fn append(vec1: BitVec, vec2: BitVec) -> BitVec {
 }
 
 
-pub fn decode(coded:&[u8])->Vec<u8>{
+pub fn decode(coded: &[u8]) -> Vec<u8> {
     let mut word = BitVec::from_bytes(coded);
     let mut encoded_whole = BitVec::new();
     word = checking_for_eight(word);
@@ -115,9 +115,7 @@ pub fn decode(coded:&[u8])->Vec<u8>{
         start += 7;
         end += 7;
     }
-    let vec = &encoded_whole.to_bytes();
-    
-    vec
+    encoded_whole.to_bytes()
 }
 
 pub fn checking_for_eight(code: BitVec) -> BitVec {

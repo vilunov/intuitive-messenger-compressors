@@ -224,7 +224,7 @@ mod test {
 
         let encoded = encode(&input[..]);
         let decoded = decode(&encoded[..]);
-        assert_eq!(decoded, input);
+        assert_eq!(decoded, Some(input));
     }
 
     #[test]
@@ -233,7 +233,7 @@ mod test {
 
         let encoded = encode(&input[..]);
         let decoded = decode(&encoded[..]);
-        assert_eq!(decoded, input);
+        assert_eq!(decoded, Some(input));
     }
 
     #[test]
@@ -242,6 +242,6 @@ mod test {
 
         let encoded = encode(&input[..]);
         let decoded = decode(&encoded[..]);
-        assert_eq!(decoded, input);
+        assert_eq!(decoded, Some(input));
     }
 }
