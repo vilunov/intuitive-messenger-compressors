@@ -1,34 +1,50 @@
 use bit_vec::BitVec;
 
+const N: usize = 4;
+
 pub fn encode(input: &[u8]) -> Vec<u8> {
-    let bit_vec = BitVec::from_bytes(input);
+    let mut vec = Vec::new();
 
-    let is_even = bit_vec.iter().fold(!bit_vec[0], |a, b| a != b);
+    let mut pos = 0;
+    while pos < input.len() {
+        let bit_vec = BitVec::from_bytes(&input[pos..(pos + N).min(input.len())]);
 
-    let mut vec = input.to_vec();
-    vec.push((if is_even { 0 } else { 255 }));
+        let is_even = bit_vec.iter().fold(!bit_vec[0], |a, b| a != b);
+
+        vec.append(&mut bit_vec.to_bytes());
+        vec.push((if is_even { 0 } else { 255 }));
+
+        pos += N;
+    }
+
     vec
 }
 
 pub fn decode(input: &[u8]) -> Option<Vec<u8>> {
-    let bit_vec = BitVec::from_bytes(&input[0..(input.len() - 1)]);
-    let is_even = bit_vec.iter().fold(!bit_vec[0], |a, b| a != b);
+    let mut vec = Vec::new();
 
-    let mut one_count = 0;
-    for bit in BitVec::from_bytes(&input[input.len() - 1..input.len()]) {
-        if bit {
-            one_count += 1;
+    let mut pos = 0;
+    while pos < input.len() {
+        let check_byte_pos = (pos + N).min(input.len() - 1);
+
+        let bit_vec = BitVec::from_bytes(&input[pos..check_byte_pos]);
+        let is_even = bit_vec.iter().fold(!bit_vec[0], |a, b| a != b);
+
+        let mut one_count = 0;
+        for bit in BitVec::from_bytes(&input[check_byte_pos..check_byte_pos + 1]) {
+            one_count += bit as u32;
         }
-    }
-    let is_even_byte = one_count < 5;
+        let is_even_byte = one_count < 5;
+        if is_even_byte != is_even {
+            return None;
+        }
 
-    if is_even_byte == is_even {
-        let mut vec = input.to_vec();
-        vec.pop();
-        Some(vec)
-    } else {
-        None
+        vec.append(&mut bit_vec.to_bytes());
+
+        pos += N + 1;
     }
+
+    Some(vec)
 }
 
 #[cfg(test)]
