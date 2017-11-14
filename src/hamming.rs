@@ -62,21 +62,10 @@ pub fn set_parity(bVec: BitVec, a: u32, b: u32, c: u32) -> BitVec {
     with_parity
 }
 
-pub fn to_str(vec: Vec<u8>) -> String {
-    let mut output = String::new();
-    for x in 0..vec.len() {
-        if x != vec.len() - 1 {
-            output += &(vec[x] as u32).to_string();
-            output += " ";
-        } else {
-            output += &(vec[x] as u32).to_string();
-        }
-    }
-    output
-}
 
-pub fn encode(word: String) -> String {
-    let mut bv = BitVec::from_bytes(&(word.into_bytes()));
+
+pub fn encode(input: &[u8])->Vec<u8>{
+    let mut bv = BitVec::from_bytes(input);
     let mut vector = BitVec::new();
     vector.push(false);
     let mut start: u32 = 0; //start of substring to add parity bits
@@ -97,7 +86,7 @@ pub fn encode(word: String) -> String {
         vector.set(0, true);
     }
 
-    to_str(vector.to_bytes())
+   vector.to_bytes()
 
 }
 
@@ -109,19 +98,9 @@ pub fn append(vec1: BitVec, vec2: BitVec) -> BitVec {
     vec3
 }
 
-pub fn parse_to_u8(line: Vec<&str>) -> Vec<u8> {
-    let mut output: Vec<u8> = Vec::new();
-    for x in 0..line.len() {
-        output.push(line[x].parse().unwrap());
-    }
-    output
-}
 
-pub fn decode(coded: String) -> String {
-    let v: Vec<&str> = coded.split(' ').collect();
-    //println!("{}", v.len());
-    let parsed = parse_to_u8(v);
-    let mut word = BitVec::from_bytes(&parsed);
+pub fn decode(coded:&[u8])->Vec<u8>{
+    let mut word = BitVec::from_bytes(coded);
     let mut encoded_whole = BitVec::new();
     word = checking_for_eight(word);
     let mut start = 0;
@@ -137,8 +116,8 @@ pub fn decode(coded: String) -> String {
         end += 7;
     }
     let vec = &encoded_whole.to_bytes();
-    let decoded = String::from_utf8_lossy(vec).into_owned();
-    decoded
+    
+    vec
 }
 
 pub fn checking_for_eight(code: BitVec) -> BitVec {
