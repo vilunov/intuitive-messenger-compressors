@@ -27,39 +27,44 @@ pub fn drop(arr: Arr) {
 }
 
 #[no_mangle]
-pub fn basic(vec: *const u8, len: usize) -> Arr {
-    wrapper(vec, len, basic_raw)
-}
-
-#[no_mangle]
 pub fn huff_encode(vec: *const u8, len: usize) -> Arr {
-    wrapper(vec, len, huffman::encode)
+    wrapper_encode(vec, len, huffman::encode)
 }
 
 #[no_mangle]
 pub fn huff_decode(vec: *const u8, len: usize) -> Arr {
-    wrapper(vec, len, huffman::decode)
+    wrapper_decode(vec, len, huffman::decode)
 }
 
-pub fn wrapper<F: Fn(&[u8]) -> Vec<u8>>(vec: *const u8, len: usize, func: F) -> Arr {
+pub fn wrapper_decode<F: Fn(&[u8]) -> Option<Vec<u8>>>(vec: *const u8, len: usize, func: F) -> Arr {
     let slice = unsafe { from_raw_parts(vec, len) };
 
     let mut vec = func(slice);
-    vec.shrink_to_fit();
+    match vec {
+        Some(mut a) => {
+            a.shrink_to_fit();
 
-    let ptr = vec.as_mut_ptr();
-    let len = vec.len();
-    let cap = vec.capacity();
-    forget(vec);
+            let ptr = a.as_mut_ptr();
+            let len = a.len();
+            let cap = a.capacity();
+            forget(a);
 
-    Arr { ptr, len, cap }
+            Arr { ptr, len, cap }
+        },
+        None => Arr { ptr: 0 as *mut u8, len: 0, cap: 0}
+    }
 }
 
-fn basic_raw(vec: &[u8]) -> Vec<u8> {
-    let mut v = vec.to_vec();
-    v.pop();
-    for i in 0..v.len() {
-        v[i] *= 2;
-    }
-    v
+pub fn wrapper_encode<F: Fn(&[u8]) -> Vec<u8>>(vec: *const u8, len: usize, func: F) -> Arr {
+    let slice = unsafe { from_raw_parts(vec, len) };
+
+    let mut a = func(slice);
+    a.shrink_to_fit();
+
+    let ptr = a.as_mut_ptr();
+    let len = a.len();
+    let cap = a.capacity();
+    forget(a);
+
+    Arr { ptr, len, cap }
 }

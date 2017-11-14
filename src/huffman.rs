@@ -131,7 +131,10 @@ fn slovar_encode(freqs: &[u32; 256]) -> HashMap<u8, BitVec> {
     map
 }
 
-pub fn decode(input: &[u8]) -> Vec<u8> {
+pub fn decode(input: &[u8]) -> Option<Vec<u8>> {
+    if input.len() < 256 * 4 + 1 {
+        return None;
+    }
     let mut freqs: [u32; 256] = unsafe { ::std::mem::uninitialized() };
     let mut bits = BitVec::from_bytes(&input[0..input.len() - 256 * 4 - 1]);
     {
@@ -155,11 +158,14 @@ pub fn decode(input: &[u8]) -> Vec<u8> {
     let mut start = 0;
     let mut vec = Vec::new();
     while start < bits.len() {
-        let (byte, next) = get(&bits, start, &slovar);
-        vec.push(byte);
-        start = next + 1;
+        if let Some((byte, next)) = get(&bits, start, &slovar) {
+            vec.push(byte);
+            start = next + 1;
+        } else {
+            return None;
+        }
     }
-    vec
+    Some(vec)
 }
 
 pub fn encode(input: &[u8]) -> Vec<u8> {
@@ -184,7 +190,7 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
     vec
 }
 
-fn get(bits: &BitVec, start: usize, tree: &[Node; 256]) -> (u8, usize) {
+fn get(bits: &BitVec, start: usize, tree: &[Node; 256]) -> Option<(u8, usize)> {
     let mut current_bit = start;
     let mut current = 0;
 
@@ -193,16 +199,19 @@ fn get(bits: &BitVec, start: usize, tree: &[Node; 256]) -> (u8, usize) {
             (Continuation(a, _), false) => a as usize,
             (Continuation(_, b), true) => b as usize,
 
-            (LeftFinish(a, _), false) => return (a, current_bit),
+            (LeftFinish(a, _), false) => return Some((a, current_bit)),
             (LeftFinish(_, b), true) => b as usize,
 
             (RightFinish(a, _), false) => a as usize,
-            (RightFinish(_, b), true) => return (b, current_bit),
+            (RightFinish(_, b), true) => return Some((b, current_bit)),
 
-            (BothFinish(a, _), false) => return (a, current_bit),
-            (BothFinish(_, b), true) => return (b, current_bit),
+            (BothFinish(a, _), false) => return Some((a, current_bit)),
+            (BothFinish(_, b), true) => return Some((b, current_bit)),
         };
         current_bit += 1;
+        if current_bit >= bits.len() {
+            return None;
+        }
     }
 }
 
