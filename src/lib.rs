@@ -41,7 +41,7 @@ pub fn huff_decode(vec: *const u8, len: usize) -> Arr {
 pub fn wrapper_decode<F: Fn(&[u8]) -> Option<Vec<u8>>>(vec: *const u8, len: usize, func: F) -> Arr {
     let slice = unsafe { from_raw_parts(vec, len) };
 
-    let mut vec = func(slice);
+    let vec = func(slice);
     match vec {
         Some(mut a) => {
             a.shrink_to_fit();
