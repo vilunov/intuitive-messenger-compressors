@@ -11,6 +11,7 @@ mod parity_check;
 mod repetition;
 mod shannon_fano;
 mod hamming;
+mod arithmetic;
 
 use std::slice::from_raw_parts;
 use std::mem::forget;
