@@ -235,3 +235,17 @@ pub fn parity_check(code: BitVec) -> BitVec {
     let mut encoded = flipped_bit(indexes, parity, code);
     encoded
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let input: Vec<u8> = vec![1, 3, 3, 7, 2, 2, 8, 14, 88, 13, 37, 37, 14, 53, 19, 41, 19, 45];
+
+        let encoded = encode(&input[..]);
+        let decoded = decode(&encoded[..]).unwrap();
+        assert_eq!(decoded, input);
+    }
+}

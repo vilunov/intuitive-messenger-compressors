@@ -85,7 +85,7 @@ pub fn ham_encode(vec: *const u8, len: usize) -> Arr {
 
 #[no_mangle]
 pub fn ham_decode(vec: *const u8, len: usize) -> Arr {
-    wrapper_encode(vec, len, hamming::decode)
+    wrapper_decode(vec, len, hamming::decode)
 }
 
 
