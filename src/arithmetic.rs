@@ -93,7 +93,7 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
     bytes
 }
 
-fn decode(input: &[u8]) -> Option<Vec<u8>> {
+pub fn decode(input: &[u8]) -> Option<Vec<u8>> {
     fn unscaled(upper: Probability, lower: Probability, code: Probability, sum: u64) -> Probability {
         let range: u64 = upper as u64 - lower as u64 + 1;
         let mut unscaled: u64 = code as u64 - lower as u64 + 1;

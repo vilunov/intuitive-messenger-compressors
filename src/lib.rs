@@ -38,6 +38,57 @@ pub fn huff_decode(vec: *const u8, len: usize) -> Arr {
     wrapper_decode(vec, len, huffman::decode)
 }
 
+#[no_mangle]
+pub fn ar_encode(vec: *const u8, len: usize) -> Arr {
+    wrapper_encode(vec, len, arithmetic::encode)
+}
+
+#[no_mangle]
+pub fn ar_decode(vec: *const u8, len: usize) -> Arr {
+    wrapper_decode(vec, len, arithmetic::decode)
+}
+
+#[no_mangle]
+pub fn sf_encode(vec: *const u8, len: usize) -> Arr {
+    wrapper_encode(vec, len, shannon_fano::encode)
+}
+
+#[no_mangle]
+pub fn sf_decode(vec: *const u8, len: usize) -> Arr {
+    wrapper_decode(vec, len, shannon_fano::decode)
+}
+
+#[no_mangle]
+pub fn rep_encode(vec: *const u8, len: usize) -> Arr {
+    wrapper_encode(vec, len, repetition::encode)
+}
+
+#[no_mangle]
+pub fn rep_decode(vec: *const u8, len: usize) -> Arr {
+    wrapper_decode(vec, len, repetition::decode)
+}
+
+#[no_mangle]
+pub fn pc_encode(vec: *const u8, len: usize) -> Arr {
+    wrapper_encode(vec, len, parity_check::encode)
+}
+
+#[no_mangle]
+pub fn pc_decode(vec: *const u8, len: usize) -> Arr {
+    wrapper_decode(vec, len, parity_check::decode)
+}
+
+#[no_mangle]
+pub fn ham_encode(vec: *const u8, len: usize) -> Arr {
+    wrapper_encode(vec, len, hamming::encode)
+}
+
+#[no_mangle]
+pub fn ham_decode(vec: *const u8, len: usize) -> Arr {
+    wrapper_encode(vec, len, hamming::decode)
+}
+
+
 pub fn wrapper_decode<F: Fn(&[u8]) -> Option<Vec<u8>>>(vec: *const u8, len: usize, func: F) -> Arr {
     let slice = unsafe { from_raw_parts(vec, len) };
 
