@@ -1,6 +1,6 @@
 use bit_vec::BitVec;
 
-const N: usize = 4;
+const N: usize = 64;
 
 pub fn encode(input: &[u8]) -> Vec<u8> {
     let mut vec = Vec::new();
