@@ -13,6 +13,7 @@ fn freqs(input: &[u8]) -> [u32; 256] {
     for i in input {
         freqs[*i as usize] += 1;
     }
+    let mut m = 0;
     freqs
 }
 
@@ -64,9 +65,8 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
     let mut lower: Probability = 0;
     let mut upper: Probability = !0;
     let mut underflow_bits = 0;
-    println!("sum {}", sum);
 
-    for i in input {
+    for i in input.iter() {
         //apply range
         let range: u64 = upper as u64 - lower as u64 + 1;
         upper = lower + (range * freqs[*i as usize + 1] as u64 / sum) as Probability - 1;
@@ -74,31 +74,35 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
 
         write_bits(&mut output, &mut underflow_bits, &mut upper, &mut lower);
     }
-    output.push(lower & MASK_1 != 0);
-    for _ in 0..underflow_bits {
-        output.push(lower & MASK_1 == 0);
+
+    {
+        output.push(lower & MASK_1 != 0);
+        for _ in 0..(underflow_bits+1) {
+            output.push(lower & MASK_1 == 0);
+        }
     }
 
-    let freebits = output.len() % 8;
+    let free_bits = output.len() % 8;
     let mut bytes = output.to_bytes();
     for i in freqs.iter() {
         bytes.write_u32::<LittleEndian>(*i).unwrap();
     }
     bytes.write_u32::<LittleEndian>(input.len() as u32).unwrap();
-    bytes.push(freebits as u8);
+    bytes.push(free_bits as u8);
+
     bytes
 }
 
 fn decode(input: &[u8]) -> Option<Vec<u8>> {
-    fn unscaled(upper: Probability, lower: Probability, code: Probability, sum: Probability) -> Probability {
+    fn unscaled(upper: Probability, lower: Probability, code: Probability, sum: u64) -> Probability {
         let range: u64 = upper as u64 - lower as u64 + 1;
         let mut unscaled: u64 = code as u64 - lower as u64 + 1;
-        unscaled *= sum as u64;
+        unscaled *= sum;
         unscaled -= 1;
-        (unscaled as u64 / range) as Probability
+        (unscaled / range) as Probability
     }
 
-    if input.len() < 257 * 4 + 1 {
+    if input.len() < 258 * 4 + 1 {
         return None;
     }
     let mut freqs: [u32; 257] = unsafe { ::std::mem::uninitialized() };
@@ -109,6 +113,7 @@ fn decode(input: &[u8]) -> Option<Vec<u8>> {
             bits.pop();
         }
     }
+    //read the freq table and the size of data
     let mut cursor: Cursor<&[u8]> = Cursor::new(&input[input.len() - 258 * 4 - 1..
         input.len() - 1]);
     for i in 0..257 {
@@ -124,22 +129,24 @@ fn decode(input: &[u8]) -> Option<Vec<u8>> {
     //read first bits
     for _ in 0..PRECISION.min(bits.len() as u32) {
         code <<= 1;
-        if bits[i as usize] { code |= 1 }
+        if bits[i] { code |= 1 }
         i += 1;
     }
     if bits.len() < PRECISION as usize {
         code <<= PRECISION as usize - bits.len();
     }
-    let mut j = bits.len().min(PRECISION as usize);
+
     let mut output: Vec<u8> = Vec::new();
     let mut lower: Probability = 0;
     let mut upper: Probability = !0;
     for _ in 0..len {
+        //binary search for the val in freq table
         let val = {
             let mut first: u8 = 0;
             let mut last: u8 = 255;
             let mut middle: u8 = last / 2;
-            let unscl = unscaled(upper, lower, code, freqs[256]);
+            let unscl = unscaled(upper, lower, code, sum);
+            println!("{} {}", code, unscl);
             loop {
                 if unscl < freqs[middle as usize] {
                     last = middle - 1;
@@ -154,19 +161,19 @@ fn decode(input: &[u8]) -> Option<Vec<u8>> {
                 break middle;
             }
         };
+        println!("{}", val);
         output.push(val);
 
-        //apply range
-        let range: u64 = upper as u64 - lower as u64 + 1;
-        upper = lower + (range * freqs[val as usize + 1] as u64 / sum) as Probability - 1;
-        lower = lower + (range * freqs[val as usize] as u64 / sum) as Probability;
-
-
+        //apply range to remove the value from the code
+        {
+            let range: u64 = upper as u64 - lower as u64 + 1;
+            upper = lower + (range * freqs[val as usize + 1] as u64 / sum) as Probability - 1;
+            lower = lower + (range * freqs[val as usize] as u64 / sum) as Probability;
+        }
 
         //reading
         loop {
             if upper & MASK_0 == lower & MASK_0 {
-
             } else if (lower & MASK_1 != 0) && (upper & MASK_0 == 0) {
                 lower &= !(MASK_0 | MASK_1);
                 upper |= MASK_1;
@@ -191,10 +198,11 @@ mod test {
 
     #[test]
     fn test() {
-        let input = vec![1, 3, 3, 7];
+        let input = vec![1, 3, 3, 7, 4, 4, 4, 4, 4, 4, 4, 4];
         let encoded = encode(&input[..]);
         println!("encoded {:?}", encoded);
         let decoded = decode(&encoded[..]);
         println!("decoded {:?}", decoded);
+        assert_eq!(input, decoded.unwrap());
     }
 }
