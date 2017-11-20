@@ -146,7 +146,6 @@ fn decode(input: &[u8]) -> Option<Vec<u8>> {
             let mut last: u8 = 255;
             let mut middle: u8 = last / 2;
             let unscl = unscaled(upper, lower, code, sum);
-            println!("{} {}", code, unscl);
             loop {
                 if unscl < freqs[middle as usize] {
                     last = middle - 1;
@@ -161,7 +160,6 @@ fn decode(input: &[u8]) -> Option<Vec<u8>> {
                 break middle;
             }
         };
-        println!("{}", val);
         output.push(val);
 
         //apply range to remove the value from the code
@@ -200,9 +198,7 @@ mod test {
     fn test() {
         let input = vec![1, 3, 3, 7, 4, 4, 4, 4, 4, 4, 4, 4];
         let encoded = encode(&input[..]);
-        println!("encoded {:?}", encoded);
         let decoded = decode(&encoded[..]);
-        println!("decoded {:?}", decoded);
         assert_eq!(input, decoded.unwrap());
     }
 }
