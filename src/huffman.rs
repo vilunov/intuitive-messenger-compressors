@@ -183,7 +183,6 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
     let mut vec = bits.to_bytes();
     for i in freqs.iter() {
         use byteorder::*;
-
         vec.write_u32::<LittleEndian>(*i).unwrap();
     }
     vec.push((bits.len() % 8) as u8);
