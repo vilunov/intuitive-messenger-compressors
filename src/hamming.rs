@@ -82,9 +82,9 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
         start += 4;
         end += 4;
     }
-    if (vector.len() - 1) % 8 != 0 {
+   /* if (vector.len() - 1) % 8 != 0 {
         vector.set(0, true);
-    }
+    }*/
 
     vector.to_bytes()
 
@@ -102,7 +102,7 @@ pub fn append(vec1: BitVec, vec2: BitVec) -> BitVec {
 pub fn decode(coded: &[u8]) -> Vec<u8> {
     let mut word = BitVec::from_bytes(coded);
     let mut encoded_whole = BitVec::new();
-    word = checking_for_eight(word);
+    //word = checking_for_eight(word);
     let mut start = 0;
     let mut end = 7;
     loop {
@@ -118,7 +118,7 @@ pub fn decode(coded: &[u8]) -> Vec<u8> {
     encoded_whole.to_bytes()
 }
 
-pub fn checking_for_eight(code: BitVec) -> BitVec {
+/*pub fn checking_for_eight(code: BitVec) -> BitVec {
     let mut trunc = BitVec::new();
     if code.get(0).unwrap() == false {
         trunc = copy_bits(&code, 1, code.len() - 7);
@@ -126,7 +126,7 @@ pub fn checking_for_eight(code: BitVec) -> BitVec {
         trunc = copy_bits(&code, 1, code.len() - 1 - (7 - (code.len() - 1) % 4));
     }
     trunc
-}
+}*/
 
 pub fn indexes_to_check(a: u32, b: u32) -> HashSet<u32> {
     let mut set: HashSet<u32> = HashSet::new();
