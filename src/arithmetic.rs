@@ -1,4 +1,6 @@
 use bit_vec::BitVec;
+use byteorder::*;
+use std::io::Cursor;
 
 type Probability = u32;
 const PRECISION: Probability = 32; //always sizeof::<Probability>() * 8
@@ -65,14 +67,11 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
     println!("sum {}", sum);
 
     for i in input {
-        println!("up {}; low {}", upper, lower);
+        //apply range
         let range: u64 = upper as u64 - lower as u64 + 1;
-        println!("range {}", range);
-
-        println!("{} {} {}", *i, freqs[*i as usize], freqs[*i as usize + 1]);
         upper = lower + (range * freqs[*i as usize + 1] as u64 / sum) as Probability - 1;
         lower = lower + (range * freqs[*i as usize] as u64 / sum) as Probability;
-        println!("{} {} {} {} {}", range, lower, upper, freqs[*i as usize], freqs[*i as usize - 1]);
+
         write_bits(&mut output, &mut underflow_bits, &mut upper, &mut lower);
     }
     output.push(lower & MASK_1 != 0);
@@ -83,11 +82,107 @@ pub fn encode(input: &[u8]) -> Vec<u8> {
     let freebits = output.len() % 8;
     let mut bytes = output.to_bytes();
     for i in freqs.iter() {
-        use byteorder::*;
         bytes.write_u32::<LittleEndian>(*i).unwrap();
     }
+    bytes.write_u32::<LittleEndian>(input.len() as u32).unwrap();
     bytes.push(freebits as u8);
     bytes
+}
+
+fn decode(input: &[u8]) -> Option<Vec<u8>> {
+    fn unscaled(upper: Probability, lower: Probability, code: Probability, sum: Probability) -> Probability {
+        let range: u64 = upper as u64 - lower as u64 + 1;
+        let mut unscaled: u64 = code as u64 - lower as u64 + 1;
+        unscaled *= sum as u64;
+        unscaled -= 1;
+        (unscaled as u64 / range) as Probability
+    }
+
+    if input.len() < 257 * 4 + 1 {
+        return None;
+    }
+    let mut freqs: [u32; 257] = unsafe { ::std::mem::uninitialized() };
+    let mut bits = BitVec::from_bytes(&input[0..input.len() - 258 * 4 - 1]);
+    let last = input[input.len() - 1];
+    if last > 0 {
+        for _ in 0..(8 - last) {
+            bits.pop();
+        }
+    }
+    let mut cursor: Cursor<&[u8]> = Cursor::new(&input[input.len() - 258 * 4 - 1..
+        input.len() - 1]);
+    for i in 0..257 {
+        let val = cursor.read_u32::<LittleEndian>().unwrap();
+        freqs[i] = val;
+    }
+    let len = cursor.read_u32::<LittleEndian>().unwrap();
+
+    let sum = freqs[256] as u64;
+
+    let mut i: usize = 0;
+    let mut code: Probability = 0;
+    //read first bits
+    for _ in 0..PRECISION.min(bits.len() as u32) {
+        code <<= 1;
+        if bits[i as usize] { code |= 1 }
+        i += 1;
+    }
+    if bits.len() < PRECISION as usize {
+        code <<= PRECISION as usize - bits.len();
+    }
+    let mut j = bits.len().min(PRECISION as usize);
+    let mut output: Vec<u8> = Vec::new();
+    let mut lower: Probability = 0;
+    let mut upper: Probability = !0;
+    for _ in 0..len {
+        let val = {
+            let mut first: u8 = 0;
+            let mut last: u8 = 255;
+            let mut middle: u8 = last / 2;
+            let unscl = unscaled(upper, lower, code, freqs[256]);
+            loop {
+                if unscl < freqs[middle as usize] {
+                    last = middle - 1;
+                    middle = first + (last - first) / 2;
+                    continue
+                }
+                if unscl >= freqs[middle as usize + 1] {
+                    first = middle + 1;
+                    middle = first + (last - first) / 2;
+                    continue
+                }
+                break middle;
+            }
+        };
+        output.push(val);
+
+        //apply range
+        let range: u64 = upper as u64 - lower as u64 + 1;
+        upper = lower + (range * freqs[val as usize + 1] as u64 / sum) as Probability - 1;
+        lower = lower + (range * freqs[val as usize] as u64 / sum) as Probability;
+
+
+
+        //reading
+        loop {
+            if upper & MASK_0 == lower & MASK_0 {
+
+            } else if (lower & MASK_1 != 0) && (upper & MASK_0 == 0) {
+                lower &= !(MASK_0 | MASK_1);
+                upper |= MASK_1;
+                code ^= MASK_1;
+            } else { break }
+            lower <<= 1;
+            upper <<= 1;
+            upper |= 1;
+            code <<= 1;
+            if (i as usize) < bits.len() {
+                if bits[i as usize] { code |= 1 }
+                i += 1;
+            }
+        }
+    }
+    Some(output)
 }
 
 #[cfg(test)]
@@ -99,5 +194,7 @@ mod test {
         let input = vec![1, 3, 3, 7];
         let encoded = encode(&input[..]);
         println!("encoded {:?}", encoded);
+        let decoded = decode(&encoded[..]);
+        println!("decoded {:?}", decoded);
     }
 }
