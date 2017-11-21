@@ -67,7 +67,7 @@ pub fn set_parity(bVec: BitVec, a: u32, b: u32, c: u32) -> BitVec {
 pub fn encode(input: &[u8]) -> Vec<u8> {
     let mut bv = BitVec::from_bytes(input);
     let mut vector = BitVec::new();
-    vector.push(false);
+    //vector.push(false);
     let mut start: u32 = 0; //start of substring to add parity bits
     let mut end: u32 = 4; //end of string to add parity bits
     loop {
