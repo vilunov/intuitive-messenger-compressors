@@ -24,8 +24,8 @@ pub struct Arr {
 }
 
 #[no_mangle]
-pub fn drop(arr: Arr) {
-    let _drop = unsafe { Vec::from_raw_parts(arr.ptr, arr.len, arr.cap) };
+pub fn drop(ptr: *mut u8, len: usize, cap: usize) {
+    let _drop = unsafe { Vec::from_raw_parts(ptr, len, cap) };
 }
 
 #[no_mangle]
