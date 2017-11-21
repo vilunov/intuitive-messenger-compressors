@@ -99,7 +99,7 @@ pub fn append(vec1: BitVec, vec2: BitVec) -> BitVec {
 }
 
 
-pub fn decode(coded: &[u8]) -> Vec<u8> {
+pub fn decode(coded: &[u8]) -> Option<Vec<u8>> {
     let mut word = BitVec::from_bytes(coded);
     let mut encoded_whole = BitVec::new();
     //word = checking_for_eight(word);
@@ -115,7 +115,7 @@ pub fn decode(coded: &[u8]) -> Vec<u8> {
         start += 7;
         end += 7;
     }
-    encoded_whole.to_bytes()
+    Some(encoded_whole.to_bytes())
 }
 
 /*pub fn checking_for_eight(code: BitVec) -> BitVec {
